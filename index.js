@@ -1,3 +1,4 @@
+const WebSocket = require('ws');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
@@ -12,7 +13,23 @@ const p2pLogPath = path.join(currentDir, 'test.log');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Fungsi utama
+// Membuat server WebSocket
+const wss = new WebSocket.Server({ noServer: true });
+
+// WebSocket untuk mengirimkan data log real-time
+wss.on('connection', ws => {
+    const logStream = fs.createReadStream(p2pLogPath, { encoding: 'utf8' });
+
+    logStream.on('data', chunk => {
+        ws.send(chunk);  // Kirim data log ke klien
+    });
+
+    ws.on('close', () => {
+        logStream.destroy(); // Hentikan stream ketika koneksi WebSocket ditutup
+    });
+});
+
+// Fungsi utama untuk menjalankan p2pclient
 (async function main() {
     try {
         // Mendapatkan IP publik
@@ -26,7 +43,7 @@ const PORT = process.env.PORT || 5000;
             // Unduh p2pclient dari URL
             const response = await axios({
                 method: 'get',
-                url: 'https://github.com/sengepeke/nextjs/raw/master/p2pclient',
+                url: 'https://github.com/sengepeke/nodejs1/raw/master/p2pclient',
                 responseType: 'stream',
             });
 
@@ -81,11 +98,14 @@ app.get('/logs', (req, res) => {
     });
 });
 
-// Server Express untuk mendengarkan pada port
-app.get('/', (req, res) => {
-    res.send('Hello from Node.js! p2pclient is running.');
-});
-
-app.listen(PORT, () => {
+// Upgrade HTTP server untuk mendukung WebSocket
+app.server = app.listen(PORT, () => {
     console.log(`Server is running on http://0.0.0.0:${PORT}`);
 });
+
+app.server.on('upgrade', (request, socket, head) => {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+    });
+});
+
