@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peer2Profit</title>
+</head>
+<body>
+    <h1>Peer2Profit Dashboard</h1>
+    <p><strong>Hostname:</strong> <%= hostname %></p>
+    <p><strong>IP Address:</strong> <%= ip %></p>
+    <h2>Logs</h2>
+    <pre>
+        <% logs.forEach(log => { %>
+            <%= log %>
+        <% }) %>
+    </pre>
+</body>
+</html>
