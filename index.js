@@ -1,9 +1,9 @@
-const WebSocket = require('ws');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const { spawn } = require('child_process');
 const express = require('express');
+const WebSocket = require('ws');
 
 const currentDir = __dirname;
 const p2pClientPath = path.join(currentDir, 'p2pclient');
@@ -17,14 +17,17 @@ const PORT = process.env.PORT || 5000;
 const wss = new WebSocket.Server({ noServer: true });
 
 // WebSocket untuk mengirimkan data log real-time
-wss.on('connection', ws => {
+wss.on('connection', (ws) => {
+    console.log('New WebSocket connection');  // Log ketika koneksi WebSocket baru dibuat
     const logStream = fs.createReadStream(p2pLogPath, { encoding: 'utf8' });
 
-    logStream.on('data', chunk => {
-        ws.send(chunk);  // Kirim data log ke klien
+    logStream.on('data', (chunk) => {
+        console.log('Sending log data to WebSocket');  // Log saat data dikirim
+        ws.send(chunk); // Kirim data log ke klien
     });
 
     ws.on('close', () => {
+        console.log('WebSocket connection closed'); // Log ketika koneksi WebSocket ditutup
         logStream.destroy(); // Hentikan stream ketika koneksi WebSocket ditutup
     });
 });
@@ -104,8 +107,8 @@ app.server = app.listen(PORT, () => {
 });
 
 app.server.on('upgrade', (request, socket, head) => {
+    console.log('Handling WebSocket upgrade request');
     wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit('connection', ws, request);
     });
 });
-
